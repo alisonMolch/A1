@@ -14,13 +14,14 @@ import java.util.Iterator;
 public class A1 {
 	public static void main(String[] args){
 		getFiles("/Users/rentaluser/Documents/workspace/AS1/data_corrected/classification task/atheism/train_docs"); //try 0
-		String result=getFiles("/Users/rentaluser/Documents/workspace/AS1/data_corrected/classification task/atheism/train_docs"); 
+		String result=getFiles("/Users/rentaluser/Documents/workspace/AS1/data_corrected/classification task/atheism/train_docs/"); 
 		ArrayList<String> arr = makeArrayList(result);
+		//System.out.println(arr.size());
 		//HashMap<String, Float> x= probHash(arr);
 		//System.out.println(unigram("aklZJBSDkla", x));
-		HashMap<String, HashMap<String, Float>> y= bigramHash(arr);
-		//System.out.println(bigram("think","i", y));
-		System.out.println(count2("science", "[b]", arr));
+		HashMap<String, HashMap<String, Float>> y= bigramHash2(arr);
+		System.out.println(bigram("science","[b]", y));
+		//System.out.println(count2("science", "[b]", arr));
 		//System.out.println(count("[b]", arr));
 		
 	}
@@ -106,8 +107,9 @@ public class A1 {
 	}
 	
 
-	public static int count (String a, ArrayList<String> arrlst){
+	public static int count(String a, ArrayList<String> arrlst){
 		int i=0;
+		//System.out.println("here");
 		for (String s:arrlst){
 			if (s.equals(a)){
 				i++;
@@ -139,11 +141,16 @@ public class A1 {
 	}
 
 	public static HashMap<String, HashMap<String, Float>> bigramHash(ArrayList<String> arr){
+		
 		HashMap<String, HashMap<String, Float>> outerHash = new HashMap<String, HashMap<String, Float>>();
+		
 		for(String x: arr){
+			System.out.println("here");
 			HashMap<String, Float> innerHash = new HashMap<String, Float>();
 			if (!outerHash.containsKey(x)){
+				System.out.println("here1");
 				for (String y:arr){
+					System.out.println("here3");
 					if (!innerHash.containsKey(y)){
 						innerHash.put(y, bigramProb(y,x, arr));	
 					}
@@ -154,6 +161,27 @@ public class A1 {
 		return outerHash;
 	}
 	
+	public static HashMap<String, HashMap<String, Float>> bigramHash2(ArrayList<String> arr){
+		
+		HashMap<String, HashMap<String, Float>> outerHash = new HashMap<String, HashMap<String, Float>>();
+		int count=0;
+		for(String x: arr){
+			System.out.println(count);
+			HashMap<String, Float> innerHash = new HashMap<String, Float>();
+			if (!outerHash.containsKey(x)){
+				System.out.println("here2");
+					String y = arr.get(count+1);
+					if (!innerHash.containsKey(y)){
+						System.out.println("here3");
+						innerHash.put(y, bigramProb(y,x, arr));	
+					}
+			
+				outerHash.put(x, innerHash);	
+			}
+			count=count+1;
+		}
+		return outerHash;
+	}
 	public static float bigramProb(String a, String b, ArrayList<String> arr){
 		
 		return (float) count2(a,b, arr)/count(b, arr);
@@ -176,6 +204,14 @@ public class A1 {
 	}
 	
 	public static float bigram(String a, String b, HashMap<String, HashMap<String, Float>> hash){
-		return hash.get(b).get(a);
+		System.out.println("here2");
+		try{
+			return hash.get(b).get(a);
+		}
+		catch (NullPointerException exc){
+		
+		}
+		return (float) 0;
 	}
 } 
+
