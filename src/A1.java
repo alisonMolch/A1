@@ -16,13 +16,18 @@ public class A1 {
 		getFiles("/Users/rentaluser/Documents/workspace/AS1/data_corrected/classification task/atheism/train_docs"); //try 0
 		String result=getFiles("/Users/rentaluser/Documents/workspace/AS1/data_corrected/classification task/atheism/train_docs"); 
 		ArrayList<String> arr = makeArrayList(result);
-		HashMap<String, Float> x= probHash(arr);
-		System.out.println(probability("not", x));
+		//HashMap<String, Float> x= probHash(arr);
+		//System.out.println(unigram("aklZJBSDkla", x));
+		HashMap<String, HashMap<String, Float>> y= bigramHash(arr);
+		//System.out.println(bigram("think","i", y));
+		System.out.println(count2("science", "[b]", arr));
+		//System.out.println(count("[b]", arr));
+		
 	}
 	
 	static String getFiles(String path){
 		File f = new File(path);
-		System.out.println(f.exists());
+		//System.out.println(f.exists());
 		ArrayList<File> files = new ArrayList<File>(Arrays.asList(f.listFiles()));
 	//	System.out.println(files);
 		//int y =0;
@@ -91,24 +96,31 @@ public class A1 {
 	static HashMap<String,Float> probHash(ArrayList<String> arr){
 		HashMap<String,Float> wordcounts = new HashMap<String, Float>();
 		for(String word: arr){
-			if (wordcounts.containsKey(word)){
-				wordcounts.put(word.toLowerCase(),wordcounts.get(word.toLowerCase())+1);
-			}
-			else{
-				wordcounts.put(word.toLowerCase(),(float) 1);
+			if (!wordcounts.containsKey(word.toLowerCase())){
+				wordcounts.put(word.toLowerCase(),(float) count(word,arr)/arr.size());
 			}
 		}
-		for(String word: wordcounts.keySet()){
-		
-			wordcounts.put(word.toLowerCase(),wordcounts.get(word.toLowerCase())/arr.size());
 
-		}
 		System.out.println(wordcounts);
 		return wordcounts;
 	}
 	
-	static float probability(String word, HashMap<String,Float> wordcounts){
-		return wordcounts.get(word);
+
+	public static int count (String a, ArrayList<String> arrlst){
+		int i=0;
+		for (String s:arrlst){
+			if (s.equals(a)){
+				i++;
+			}
+		}
+		return i;
+	}
+	
+	static float unigram(String word, HashMap<String,Float> wordcounts){
+		if (wordcounts.get(word)!=null){
+			return wordcounts.get(word);
+		}
+		return 0;
 	}
 	
 	public static ArrayList<String> makeArrayList(String st){
@@ -126,4 +138,44 @@ public class A1 {
 		return myList;
 	}
 
+	public static HashMap<String, HashMap<String, Float>> bigramHash(ArrayList<String> arr){
+		HashMap<String, HashMap<String, Float>> outerHash = new HashMap<String, HashMap<String, Float>>();
+		for(String x: arr){
+			HashMap<String, Float> innerHash = new HashMap<String, Float>();
+			if (!outerHash.containsKey(x)){
+				for (String y:arr){
+					if (!innerHash.containsKey(y)){
+						innerHash.put(y, bigramProb(y,x, arr));	
+					}
+				}
+				outerHash.put(x, innerHash);	
+			}	
+		}
+		return outerHash;
+	}
+	
+	public static float bigramProb(String a, String b, ArrayList<String> arr){
+		
+		return (float) count2(a,b, arr)/count(b, arr);
+	}
+	
+	
+	public static int count2(String a, String b, ArrayList<String> arrlst){
+		int count=0;
+		for (int i=0; i<arrlst.size()-1; i++){
+			
+			if (arrlst.get(i).toLowerCase().equals(a.toLowerCase())){
+				if (arrlst.get(i+1).toLowerCase().equals(b.toLowerCase())){
+					
+					count++;
+				}
+			}
+		}
+		
+		return count;
+	}
+	
+	public static float bigram(String a, String b, HashMap<String, HashMap<String, Float>> hash){
+		return hash.get(b).get(a);
+	}
 } 
