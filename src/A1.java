@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -24,9 +25,10 @@ public class A1 {
 		//System.out.println(y);
 		//System.out.println(unigram("science", y));
 		
-		//HashMap<String, HashMap<String, Integer>> bc = bigramCounts(arr);
-		System.out.println(bigramCounts(arr));
-		
+		HashMap<String, HashMap<String, Integer>> bc = bigramCounts(arr);
+		HashMap<String, HashMap<String, Float>> z = bigramProbHashmap(bc, x);
+		System.out.println(bigram("[b]", "science", z));
+		System.out.println(sorted(arr));
 		//System.out.println(unigram("aklZJBSDkla", x));
 		//System.out.println(count2("science", "[b]", arr));
 		//System.out.println(count("[b]", arr));
@@ -100,7 +102,7 @@ public class A1 {
 	
 	/**Processes a string by removing extra characters and replacing all punctuation with one common pattern*/
 	static String strProcess(String s){
-		String result = s.replaceAll("[-+^:\"></\\()|#]", "");
+		String result = s.replaceAll("[~$%'-+^:\"></\\()|#]", "");
 		String re= result.replaceAll("[.?!]", "[b]");
 		re= re.replace(". ", " [b]");
 		return re;
@@ -125,27 +127,45 @@ public class A1 {
 
 	public static HashMap<String, HashMap<String, Integer>> bigramCounts(ArrayList<String> arr){
 		HashMap<String, HashMap<String, Integer>> outerHash = new HashMap<String,HashMap<String, Integer>>();
-		for(int i=0; i<arr.size()-1; i++){
+		for(int i=0; i<arr.size()-2; i++){
 			if (outerHash.containsKey(arr.get(i))){
-				System.out.println("here");
+				
 				HashMap<String,Integer>innerhash = outerHash.get(arr.get(i));
 				
 				if (innerhash.containsKey(arr.get(i+1))){
-					innerhash.put(arr.get(i+1), innerhash.get(i+1)+1);
+//					try{
+						//System.out.println(arr.get(i+1));
+						String x = arr.get(i+1);
+						innerhash.put(arr.get(i+1), innerhash.get(arr.get(i+1))+1);
+					
+					
+//					catch (NullPointerException e){
+//						
+//					}
+					
 				}
 				else{
+					//System.out.println(arr.get(i+1));
 					innerhash.put(arr.get(i+1), 1);
 				}
+				//System.out.println(innerhash);
 			}
 			else{
+				//System.out.println(arr.get(i));
 				HashMap<String,Integer> innerhash = new HashMap<String, Integer>();
 				innerhash.put(arr.get(i+1),1);
 				outerHash.put(arr.get(i), innerhash);
 			}
+			
 		}
 		return outerHash;
 	}
 	
+//	public static HashMap<String, HashMap<String, Integer>> bigramCounts1(ArrayList<String> arr){
+//		HashMap<String, HashMap<String, Integer>> outerHash = new HashMap<String,HashMap<String, Integer>>();
+//		
+//		
+//	}
 	public static HashMap<String, Integer> unigramCounts(ArrayList<String> arr){
 		HashMap<String, Integer> result = new HashMap<String, Integer>();
 		for (String x:arr){
@@ -163,17 +183,33 @@ public class A1 {
 	public static HashMap<String, HashMap<String, Float>> bigramProbHashmap(HashMap<String, HashMap<String, Integer>> map, HashMap<String, Integer> unigramCounts){
 		HashMap<String, HashMap<String, Float>> outer = new HashMap<String, HashMap<String, Float>>(); 
 		for (Entry<String, HashMap<String, Integer>> entry : map.entrySet()){
+			
 			Integer countOuter = unigramCounts.get(entry.getKey());
 			HashMap<String, Float> inner = new HashMap<String, Float>();
 			for (Entry<String, Integer> innerEntry: map.get(entry.getKey()).entrySet()){
+				
 				Integer x = map.get(entry.getKey()).get(innerEntry.getKey());
 				float prob = (float) x/ (float) countOuter;
 				inner.put(innerEntry.getKey(), prob);
-			}
 				
+			}
+			outer.put(entry.getKey(), inner);	
 			
 		}
 		return outer;
+	}
+	
+	/*gives the bigram probability of string a given string b
+	 * 
+	 */
+	public static float bigram(String a, String b, HashMap<String, HashMap<String, Float>> map){
+		try{
+			return map.get(b).get(a);
+		}
+		catch (NullPointerException e){
+			
+		}
+		return (float) 0;
 	}
 	
 	public static HashMap<String, Float> unigramProbHashmap(HashMap<String, Integer> map){
@@ -197,6 +233,10 @@ public class A1 {
 	}
 	
 
+	public static ArrayList<String> sorted(ArrayList<String> arr){
+		Collections.sort(arr);
+		return arr;
+	}
 } 
 
 
