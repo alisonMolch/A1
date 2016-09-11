@@ -165,6 +165,22 @@ public class A1 {
 		return outer;
 	}
 	
+	public static HashMap<String, Float> unigramProbHashmap(HashMap<String, Integer> map){
+		HashMap<String, Float> result = new HashMap<String, Float>();
+		Integer sum = 0;
+		for (Entry<String, Integer> entry: map.entrySet()){
+			Integer x = entry.getValue();
+			sum = sum+x;
+		}
+		for (Entry<String, Integer> entry: map.entrySet()){
+			Integer x = entry.getValue();
+			String y = entry.getKey();
+			result.put(y, (float)x/(float) sum);
+			
+		}
+		return result;
+	}
+	
 
 } 
 	
