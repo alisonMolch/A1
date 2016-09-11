@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map.Entry;
 
 
 
@@ -17,7 +18,15 @@ public class A1 {
 		String result=getFiles("/Users/rentaluser/Documents/workspace/AS1/data_corrected/classification task/atheism/train_docs/"); 
 		ArrayList<String> arr = makeArrayList(result);
 		//System.out.println(arr.size());
-		//HashMap<String, Float> x= probHash(arr);
+		HashMap<String, Integer> x= unigramCounts(arr);
+		//System.out.println(x);
+		HashMap<String, Float> y = unigramProbHashmap(x);
+		//System.out.println(y);
+		//System.out.println(unigram("science", y));
+		
+		//HashMap<String, HashMap<String, Integer>> bc = bigramCounts(arr);
+		System.out.println(bigramCounts(arr));
+		
 		//System.out.println(unigram("aklZJBSDkla", x));
 		//System.out.println(count2("science", "[b]", arr));
 		//System.out.println(count("[b]", arr));
@@ -118,7 +127,9 @@ public class A1 {
 		HashMap<String, HashMap<String, Integer>> outerHash = new HashMap<String,HashMap<String, Integer>>();
 		for(int i=0; i<arr.size()-1; i++){
 			if (outerHash.containsKey(arr.get(i))){
+				System.out.println("here");
 				HashMap<String,Integer>innerhash = outerHash.get(arr.get(i));
+				
 				if (innerhash.containsKey(arr.get(i+1))){
 					innerhash.put(arr.get(i+1), innerhash.get(i+1)+1);
 				}
@@ -172,19 +183,21 @@ public class A1 {
 			Integer x = entry.getValue();
 			sum = sum+x;
 		}
-		for (Entry<String, Integer> entry: map.entrySet()){
-			Integer x = entry.getValue();
-			String y = entry.getKey();
+		for (Entry<String, Integer> z: map.entrySet()){
+			Integer x = z.getValue();
+			String y = z.getKey();
 			result.put(y, (float)x/(float) sum);
 			
 		}
 		return result;
 	}
 	
-
-} 
+	public static float unigram(String x, HashMap<String, Float> map){
+		return map.get(x);
+	}
 	
 
 } 
+
 
 
