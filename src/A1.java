@@ -26,6 +26,7 @@ public class A1 {
 		
 	}
 	
+	/** Takes a file path and returns the path as a string */
 	static String getFiles(String path){
 		File f = new File(path);
 		//System.out.println(f.exists());
@@ -50,6 +51,9 @@ public class A1 {
 		//System.out.println(y);
 	}
 	
+	/**Takes a filepath and a set of characters and reads the files in that path. Returns a processed String
+	 * of file content 
+	 */
 	static String readFile(String path, Charset encoding) throws IOException{
 		byte[] encoded = Files.readAllBytes(Paths.get(path));
 		// System.out.println(new String(encoded, encoding));
@@ -59,6 +63,7 @@ public class A1 {
 		//return strProcess(removeHeader(strfile));
 	}
 	
+	/**Removes the email header of a file */
 	static String removeHeader(String file){
 		int stEmail = 0;
 		if (file.contains("writes")){
@@ -86,6 +91,7 @@ public class A1 {
 		return file.substring(stEmail,file.length());
 	} 
 	
+	/**Processes a string by removing extra characters and replacing all punctuation with one common pattern*/
 	static String strProcess(String s){
 		String result = s.replaceAll("[-+^:\"></\\()|#]", "");
 		String re= result.replaceAll("[.?!]", "[b]");
@@ -93,7 +99,7 @@ public class A1 {
 		return re;
 	}
 	
-	//creates probability unigram hashtable given an arraylist
+	/**Takes an arraylist of words (strings) and returns a hashmap of the probabilities associated with each word*/
 	static HashMap<String,Float> probHash(ArrayList<String> arr){
 		HashMap<String,Float> wordcounts = new HashMap<String, Float>();
 		for(String word: arr){
@@ -106,7 +112,7 @@ public class A1 {
 		return wordcounts;
 	}
 	
-
+/**Given a word, counts the number of occurrences of that word in the arraylist */
 	public static int count(String a, ArrayList<String> arrlst){
 		int i=0;
 		//System.out.println("here");
@@ -118,6 +124,7 @@ public class A1 {
 		return i;
 	}
 	
+	/**Given a word, returns the probability of that word */
 	static float unigram(String word, HashMap<String,Float> wordcounts){
 		if (wordcounts.get(word)!=null){
 			return wordcounts.get(word);
@@ -125,6 +132,7 @@ public class A1 {
 		return 0;
 	}
 	
+	/**Given a string, makes an arraylist where each word is a separate element */
 	public static ArrayList<String> makeArrayList(String st){
 		
 		ArrayList<String> myList = new ArrayList<String>(Arrays.asList(st.split("\\s")));
@@ -140,6 +148,7 @@ public class A1 {
 		return myList;
 	}
 
+	/**Given an arraylist of words, returns a hashmap of words and the probability of that word combined with each other word*/
 	public static HashMap<String, HashMap<String, Float>> bigramHash(ArrayList<String> arr){
 		
 		HashMap<String, HashMap<String, Float>> outerHash = new HashMap<String, HashMap<String, Float>>();
@@ -161,16 +170,31 @@ public class A1 {
 		return outerHash;
 	}
 	
+/*	public static HashMap<String, HashMap<String, Float>> bigramHash3(ArrayList<String> arr){
+		
+		HashMap<String, Word> outerHash = new HashMap<String, Word>();
+		for(int i=0; i<arr.size(); i++){
+			if (!outerHash.containsKey(arr.get(i))){
+			//how do I create a new name for each word..
+				Word hi = new Word(arr.get(i)); //consider a new class for each word, adv disadv compared to hashmap?
+				hi.count +=1;
+				
+			
+			
+		}
+	} */
+	
+	/**Another way of doing the function above?*/
 	public static HashMap<String, HashMap<String, Float>> bigramHash2(ArrayList<String> arr){
 		
 		HashMap<String, HashMap<String, Float>> outerHash = new HashMap<String, HashMap<String, Float>>();
-		int count=0;
+		int count=0; //this is counting the total words in arr, not what we want
 		for(String x: arr){
 			System.out.println(count);
 			HashMap<String, Float> innerHash = new HashMap<String, Float>();
 			if (!outerHash.containsKey(x)){
 				System.out.println("here2");
-					String y = arr.get(count+1);
+					String y = arr.get(count+1); //i think this is generally right, is there something we can do to not call count
 					if (!innerHash.containsKey(y)){
 						System.out.println("here3");
 						innerHash.put(y, bigramProb(y,x, arr));	
@@ -182,12 +206,14 @@ public class A1 {
 		}
 		return outerHash;
 	}
+	
+	/** Given two words and an arraylist of words, return the probability of that combination of words*/
 	public static float bigramProb(String a, String b, ArrayList<String> arr){
 		
 		return (float) count2(a,b, arr)/count(b, arr);
 	}
 	
-	
+	/** Takes two words and returns the number of occurences of those two words */
 	public static int count2(String a, String b, ArrayList<String> arrlst){
 		int count=0;
 		for (int i=0; i<arrlst.size()-1; i++){
@@ -203,6 +229,7 @@ public class A1 {
 		return count;
 	}
 	
+	/**given two strings and a hashtable of probabilities, return the probability of that combo of strings*/
 	public static float bigram(String a, String b, HashMap<String, HashMap<String, Float>> hash){
 		System.out.println("here2");
 		try{
@@ -213,5 +240,8 @@ public class A1 {
 		}
 		return (float) 0;
 	}
+	
+
 } 
+
 
