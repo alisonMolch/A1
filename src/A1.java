@@ -19,8 +19,6 @@ public class A1 {
 		//System.out.println(arr.size());
 		//HashMap<String, Float> x= probHash(arr);
 		//System.out.println(unigram("aklZJBSDkla", x));
-		HashMap<String, HashMap<String, Float>> y= bigramHash2(arr);
-		System.out.println(bigram("science","[b]", y));
 		//System.out.println(count2("science", "[b]", arr));
 		//System.out.println(count("[b]", arr));
 		
@@ -99,39 +97,7 @@ public class A1 {
 		return re;
 	}
 	
-	/**Takes an arraylist of words (strings) and returns a hashmap of the probabilities associated with each word*/
-	static HashMap<String,Float> probHash(ArrayList<String> arr){
-		HashMap<String,Float> wordcounts = new HashMap<String, Float>();
-		for(String word: arr){
-			if (!wordcounts.containsKey(word.toLowerCase())){
-				wordcounts.put(word.toLowerCase(),(float) count(word,arr)/arr.size());
-			}
-		}
 
-		System.out.println(wordcounts);
-		return wordcounts;
-	}
-	
-/**Given a word, counts the number of occurrences of that word in the arraylist */
-	public static int count(String a, ArrayList<String> arrlst){
-		int i=0;
-		//System.out.println("here");
-		for (String s:arrlst){
-			if (s.equals(a)){
-				i++;
-			}
-		}
-		return i;
-	}
-	
-	/**Given a word, returns the probability of that word */
-	static float unigram(String word, HashMap<String,Float> wordcounts){
-		if (wordcounts.get(word)!=null){
-			return wordcounts.get(word);
-		}
-		return 0;
-	}
-	
 	/**Given a string, makes an arraylist where each word is a separate element */
 	public static ArrayList<String> makeArrayList(String st){
 		
@@ -148,98 +114,59 @@ public class A1 {
 		return myList;
 	}
 
-	/**Given an arraylist of words, returns a hashmap of words and the probability of that word combined with each other word*/
-	public static HashMap<String, HashMap<String, Float>> bigramHash(ArrayList<String> arr){
-		
-		HashMap<String, HashMap<String, Float>> outerHash = new HashMap<String, HashMap<String, Float>>();
-		
-		for(String x: arr){
-			System.out.println("here");
-			HashMap<String, Float> innerHash = new HashMap<String, Float>();
-			if (!outerHash.containsKey(x)){
-				System.out.println("here1");
-				for (String y:arr){
-					System.out.println("here3");
-					if (!innerHash.containsKey(y)){
-						innerHash.put(y, bigramProb(y,x, arr));	
-					}
+	public static HashMap<String, HashMap<String, Integer>> bigramCounts(ArrayList<String> arr){
+		HashMap<String, HashMap<String, Integer>> outerHash = new HashMap<String,HashMap<String, Integer>>();
+		for(int i=0; i<arr.size()-1; i++){
+			if (outerHash.containsKey(arr.get(i))){
+				HashMap<String,Integer>innerhash = outerHash.get(arr.get(i));
+				if (innerhash.containsKey(arr.get(i+1))){
+					innerhash.put(arr.get(i+1), innerhash.get(i+1)+1);
 				}
-				outerHash.put(x, innerHash);	
-			}	
+				else{
+					innerhash.put(arr.get(i+1), 1);
+				}
+			}
+			else{
+				HashMap<String,Integer> innerhash = new HashMap<String, Integer>();
+				innerhash.put(arr.get(i+1),1);
+				outerHash.put(arr.get(i), innerhash);
+			}
 		}
 		return outerHash;
 	}
 	
-/*	public static HashMap<String, HashMap<String, Float>> bigramHash3(ArrayList<String> arr){
-		
-		HashMap<String, Word> outerHash = new HashMap<String, Word>();
-		for(int i=0; i<arr.size(); i++){
-			if (!outerHash.containsKey(arr.get(i))){
-			//how do I create a new name for each word..
-				Word hi = new Word(arr.get(i)); //consider a new class for each word, adv disadv compared to hashmap?
-				hi.count +=1;
+	public static HashMap<String, Integer> unigramCounts(ArrayList<String> arr){
+		HashMap<String, Integer> result = new HashMap<String, Integer>();
+		for (String x:arr){
+			if(!result.containsKey(x)){
+				result.put(x, 1);
+			}
+			else{
+				result.put(x, result.get(x)+1);
+			}
+		}
+		return result;
+	}
+	
+	
+	public static HashMap<String, HashMap<String, Float>> bigramProbHashmap(HashMap<String, HashMap<String, Integer>> map, HashMap<String, Integer> unigramCounts){
+		HashMap<String, HashMap<String, Float>> outer = new HashMap<String, HashMap<String, Float>>(); 
+		for (Entry<String, HashMap<String, Integer>> entry : map.entrySet()){
+			Integer countOuter = unigramCounts.get(entry.getKey());
+			HashMap<String, Float> inner = new HashMap<String, Float>();
+			for (Entry<String, Integer> innerEntry: map.get(entry.getKey()).entrySet()){
+				Integer x = map.get(entry.getKey()).get(innerEntry.getKey());
+				float prob = (float) x/ (float) countOuter;
+				inner.put(innerEntry.getKey(), prob);
+			}
 				
 			
-			
 		}
-	} */
-	
-	/**Another way of doing the function above?*/
-	public static HashMap<String, HashMap<String, Float>> bigramHash2(ArrayList<String> arr){
-		
-		HashMap<String, HashMap<String, Float>> outerHash = new HashMap<String, HashMap<String, Float>>();
-		int count=0; //this is counting the total words in arr, not what we want
-		for(String x: arr){
-			System.out.println(count);
-			HashMap<String, Float> innerHash = new HashMap<String, Float>();
-			if (!outerHash.containsKey(x)){
-				System.out.println("here2");
-					String y = arr.get(count+1); //i think this is generally right, is there something we can do to not call count
-					if (!innerHash.containsKey(y)){
-						System.out.println("here3");
-						innerHash.put(y, bigramProb(y,x, arr));	
-					}
-			
-				outerHash.put(x, innerHash);	
-			}
-			count=count+1;
-		}
-		return outerHash;
+		return outer;
 	}
 	
-	/** Given two words and an arraylist of words, return the probability of that combination of words*/
-	public static float bigramProb(String a, String b, ArrayList<String> arr){
-		
-		return (float) count2(a,b, arr)/count(b, arr);
-	}
-	
-	/** Takes two words and returns the number of occurences of those two words */
-	public static int count2(String a, String b, ArrayList<String> arrlst){
-		int count=0;
-		for (int i=0; i<arrlst.size()-1; i++){
-			
-			if (arrlst.get(i).toLowerCase().equals(a.toLowerCase())){
-				if (arrlst.get(i+1).toLowerCase().equals(b.toLowerCase())){
-					
-					count++;
-				}
-			}
-		}
-		
-		return count;
-	}
-	
-	/**given two strings and a hashtable of probabilities, return the probability of that combo of strings*/
-	public static float bigram(String a, String b, HashMap<String, HashMap<String, Float>> hash){
-		System.out.println("here2");
-		try{
-			return hash.get(b).get(a);
-		}
-		catch (NullPointerException exc){
-		
-		}
-		return (float) 0;
-	}
+
+} 
 	
 
 } 
