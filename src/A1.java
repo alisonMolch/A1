@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 
@@ -27,11 +28,18 @@ public class A1 {
 		
 		HashMap<String, HashMap<String, Integer>> bc = bigramCounts(arr);
 		HashMap<String, HashMap<String, Float>> z = bigramProbHashmap(bc, x);
-		System.out.println(bigram("[b]", "science", z));
-		System.out.println(sorted(arr));
+		//System.out.println(z);
+		//System.out.println(bigram("[b]", "science", z));
+		System.out.println(unigramRandomSentence("",arr));
+		//System.out.println(sorted(arr));
 		//System.out.println(unigram("aklZJBSDkla", x));
 		//System.out.println(count2("science", "[b]", arr));
 		//System.out.println(count("[b]", arr));
+		//HashMap<String, LinkedHashMap<String, Float>> cum = cumProb(z);
+		//System.out.println(cumProb(z));
+		//System.out.println(nextWord("half", cum));
+		//System.out.println(genSentenceBigram("My favorite sex position is",cum));
+		
 		
 	}
 	
@@ -237,7 +245,103 @@ public class A1 {
 		Collections.sort(arr);
 		return arr;
 	}
+	
+	public static StringBuffer unigramRandomSentence(String sentence, ArrayList<String> arr){
+		boolean flag = true;
+		StringBuffer result= new StringBuffer();
+		if (!sentence.equals("")){
+			result= result.append(sentence+ " ");
+		}
+		
+
+		while(flag){
+			double rand = Math.random();
+			int i = arr.size();
+			int x = (int) (rand*i);
+			if (arr.get(x).equals("[b][b][b]")){
+				result = result.append("...");
+			}
+			if (arr.get(x).equals("[b]")){
+				flag = false;
+				result = result.append(".");
+			}
+			else{
+				result = result.append(arr.get(x)+" ");
+			}
+			
+		}
+		return result;
+	}
+	
+	public static HashMap<String, LinkedHashMap<String, Float>> cumProb(HashMap<String, HashMap<String, Float>> map){
+		
+		HashMap<String, LinkedHashMap<String, Float>> outer = new HashMap<String, LinkedHashMap<String, Float>>();
+		for (Entry <String,HashMap<String, Float>> m :map.entrySet()){
+			float sum = 0;
+			HashMap<String, Float> innerOg = map.get(m.getKey());
+			LinkedHashMap<String, Float> innerNew = new LinkedHashMap<String, Float>();
+			for (Entry <String, Float> n: innerOg.entrySet()){
+				Float prob = innerOg.get(n.getKey());
+				sum=sum+prob;
+				innerNew.put(n.getKey(), sum);
+			}
+			outer.put(m.getKey(), innerNew);
+			
+		}
+		return outer;
+	}
+	
+	public static String nextWord(String prev, HashMap<String, LinkedHashMap<String, Float>> map){
+		double random = Math.random();
+		//System.out.println(random);
+		String next = "";
+		//System.out.println(prev);
+		LinkedHashMap<String, Float> lm =  map.get(prev);
+		for (Entry<String, Float> x :lm.entrySet()){
+			 if (random<x.getValue()){
+				 next=x.getKey();
+				 return next;
+			 }
+		}
+		return next;
+	}
+	
+	public static String genSentenceBigram(String sentence, HashMap<String, LinkedHashMap<String, Float>> cumBiprobz){
+		StringBuffer result = new StringBuffer();
+		String word = lastWord(sentence);
+		boolean flag=true;
+		if (!sentence.equals("[b]")){
+			result.append(sentence+ " ");
+		}
+		while (flag){
+			word = nextWord(word, cumBiprobz);
+			if (word.equals("[b][b][b]")){
+				result = result.append("...");
+			}
+			if (word.equals("[b]")){
+				result.append(".");
+				flag=false;
+			}
+			else{
+				result.append(word + " ");
+				
+			}
+		}
+		return result.toString();
+	}
+	
+	public static String lastWord(String sentence){
+		int x = sentence.lastIndexOf(" ");
+		if (x==-1){
+			return sentence;
+		}
+
+		else{
+			return sentence.substring(x+1, sentence.length());
+		}
+	}
+	
+	
 } 
-
-
+	
 
