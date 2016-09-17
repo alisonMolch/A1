@@ -14,29 +14,40 @@ import java.util.Map.Entry;
 
 
 
-public class A1 {
+public class a1 {
 	/**Main class runs our processor. It reads files from the designated path,
 	 * pre-processes them, and can be used to run our unigram and bigram models.
 	 * @param args
 	 */
 	public static void main(String[] args){
-		getFiles("Users/elizaweaver/Documents/workspace2110/NLPa1/data_corrected/"
-				+ "classification task/atheism/train_docs");
-		String result=getFiles("Users/elizaweaver/Documents/workspace2110/NLPa1/data_corrected/"
-				+ "classification task/atheism/train_docs/"); 
+		getFiles("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/atheism/train_docs");
+		String result=getFiles("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/atheism/train_docs"); 
 		ArrayList<String> arr = makeArrayList(result);
 		//System.out.println(arr.size());
 		HashMap<String, Integer> x= unigramCounts(arr);
+	
 		//System.out.println(x);
-		HashMap<String, Float> y = unigramProbHashmap(x);
+//		HashMap<Integer, Integer> coc = countsOfCountsUnigram(x);
+//		HashMap<String, Float> gtu = goodTuringUnigram(x, coc);
+//		HashMap<String, Float> usph= unigramSmoothedProbHashmap(gtu, arr);
+//		System.out.println(usph);
+		//System.out.println(unigramSmoothed("science", usph));
+		//System.out.println(unigramSmoothedCount("frowning", gtu));
+		//System.out.println(x.get("<unk>"));
+		//System.out.println(arr);
+		//HashMap<String, Float> y = unigramProbHashmap(x);
 		//System.out.println(y);
 		//System.out.println(unigram("science", y));
 		
 		HashMap<String, HashMap<String, Integer>> bc = bigramCounts(arr);
-		HashMap<String, HashMap<String, Float>> z = bigramProbHashmap(bc, x);
+		//System.out.println(bc);
+		HashMap<Integer, Integer> cofcb = countOfCountBigram(bc);
+		HashMap<String, HashMap<String, Float>> gtb =goodTuringBigram(bc, cofcb);
+		HashMap<String, HashMap<String, Float>> bphs= bigramProbHashmapSmoothed(gtb, x);
+		//HashMap<String, HashMap<String, Float>> z = bigramProbHashmap(bc, x);
 		//System.out.println(z);
 		//System.out.println(bigram("[b]", "science", z));
-		System.out.println(unigramRandomSentence("",arr));
+		//System.out.println(unigramRandomSentence("",arr));
 		//System.out.println(sorted(arr));
 		//System.out.println(unigram("aklZJBSDkla", x));
 		//System.out.println(count2("science", "[b]", arr));
@@ -45,6 +56,10 @@ public class A1 {
 		//System.out.println(cumProb(z));
 		//System.out.println(nextWord("half", cum));
 		//System.out.println(genSentenceBigram("My favorite sex position is",cum));
+		ArrayList<String> testString =tokenizeTest("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/test_for_classification/file_13.txt");
+		//System.out.println(Math.log(0));
+		//System.out.println(bigramSmoothed("horrible", "something", bphs));
+		System.out.println(perplexity(bphs, testString));
 		
 		
 	}
@@ -62,6 +77,17 @@ public class A1 {
 				//e.printStackTrace();
 			}
 			
+		}
+		return result;
+	}
+	
+	static String getContents(File x){
+		String result="";
+		try {
+			result = result +readFile(x.getPath(), StandardCharsets.US_ASCII);
+			
+		} catch (IOException e) {
+			//e.printStackTrace();
 		}
 		return result;
 	}
@@ -144,9 +170,13 @@ public class A1 {
 	/**Given an arraylist of words, returns a hashmap of the counts of each word*/
 	public static HashMap<String, Integer> unigramCounts(ArrayList<String> arr){
 		HashMap<String, Integer> result = new HashMap<String, Integer>();
+		result.put("<unk>", 0);
 		for (String x:arr){
 			if(!result.containsKey(x)){
-				result.put(x, 1);
+				result.put(x, 0);
+				arr.set(arr.indexOf(x), "<unk>");
+				result.put("<unk>", result.get("<unk>")+1);
+				
 			}
 			else{
 				result.put(x, result.get(x)+1);
@@ -236,8 +266,7 @@ public class A1 {
 	
 	/** Returns a hashtable of words and linked hashtables of words and their cumulative
 	 * probabilities, which is used in sentence generation*/
-	public static HashMap<String, LinkedHashMap<String, Float>> 
-	cumProb(HashMap<String, HashMap<String, Float>> map){
+	public static HashMap<String, LinkedHashMap<String, Float>> cumProb(HashMap<String, HashMap<String, Float>> map){
 		HashMap<String, LinkedHashMap<String, Float>> outer = 
 				new HashMap<String, LinkedHashMap<String, Float>>();
 		for (Entry <String,HashMap<String, Float>> m :map.entrySet()){
@@ -307,9 +336,186 @@ public class A1 {
 			return sentence.substring(x+1, sentence.length());
 		}
 	}
+	
+	/*Good turing counts for unigram, takes in the frequency unigram hashmap<string, integer>
+	 * 
+	 */
+	
+	public static HashMap<Integer, Integer> countsOfCountsUnigram(HashMap<String, Integer> map){
+		HashMap<Integer, Integer> h = new HashMap<Integer, Integer>();
+		for (Entry<String, Integer> x :map.entrySet()){
+			if (x.getValue()<12){
+				if (!h.containsKey(x.getValue())){
+					h.put(x.getValue(), 1);
+				}
+				else{
+					h.put(x.getValue(), h.get(x.getValue())+1);
+				}
+				
+			}
+		}
+		return h;
+	}
+	
+	public static HashMap<String, Float> goodTuringUnigram(HashMap<String, Integer>uni, HashMap<Integer, Integer> counts){
+		HashMap<String, Float> h = new HashMap<String, Float>();
+		for (Entry<String, Integer> x: uni.entrySet()){
+			int c = x.getValue();
+			int c1=c+1;
+			if(counts.containsKey(c)){
+				int nc= counts.get(c);
+				if (counts.containsKey(c+1)){
+					int nc1 = counts.get(c+1);
+					float cnew=(float)c1*((float)nc1/(float)nc);
+					h.put(x.getKey(), cnew);
+				}
+			}
+			else{
+				h.put(x.getKey(), (float) x.getValue());
+			}
+			
+		}
+		return h;
+	}
+	public static HashMap<String, Float> unigramSmoothedProbHashmap(HashMap<String, Float> map, ArrayList<String> arr){
+		HashMap<String, Float> result = new HashMap<String, Float>();
+		//float sum = 0;
+//		for (Entry<String, Float> entry: map.entrySet()){
+//			float x = entry.getValue();
+//			sum = sum+x;
+//		}
+		for (Entry<String, Float> z: map.entrySet()){
+			float x = z.getValue();
+			String y = z.getKey();
+			result.put(y, (float)x/((float)arr.size()));
+			
+		}
+		return result;
+	}
+	
+	public static float unigramSmoothed(String x, HashMap<String, Float> map){
+		return map.get(x);
+	}
+	
+	public static Float unigramSmoothedCount(String x, HashMap<String, Float> count){
+		return count.get(x);
+	}
+	
+	public static HashMap<Integer, Integer> countOfCountBigram(HashMap<String, HashMap<String, Integer>> bigrams){
+		HashMap<Integer, Integer> cofc = new HashMap<Integer, Integer>();
+		int acc=0;
+		for (Entry<String, HashMap<String, Integer>> el: bigrams.entrySet()){
+			HashMap<String, Integer>innerHt = el.getValue();
+			for (Entry<String, Integer> x:innerHt.entrySet()){
+				if (x.getValue()<20){
+					if (!cofc.containsKey(x.getValue())){
+						cofc.put(x.getValue(), 1);
+					}
+					else{
+						cofc.put(x.getValue(), cofc.get(x.getValue())+1);
+					}
+				}
+				
+			}
+			cofc.put(0, bigrams.size()*bigrams.size()-acc);
+		}
+		return cofc;
+	}
+	
+	public static HashMap<String, HashMap<String, Float>> goodTuringBigram(HashMap<String, HashMap<String, Integer>> bicounts, HashMap<Integer, Integer> cofcb){
+		HashMap<String, HashMap<String, Float>> smoothed = new HashMap<String, HashMap<String, Float>>();
+		for (Entry<String, HashMap<String, Integer>> el: bicounts.entrySet()){
+			HashMap<String, Float> turing = new HashMap<String, Float>();
+			HashMap<String, Integer>innerHM=el.getValue();
+			for (Entry<String, Integer> x: innerHM.entrySet()){
+				int c = x.getValue();
+				if (cofcb.containsKey(c)){
+					int c1 = c+1;
+					float nc=cofcb.get(c);
+					if (cofcb.containsKey(c1)){
+						float nc1=cofcb.get(c1);
+						float cnew = (float)c1*(nc1/nc);
+						turing.put(x.getKey(), cnew);
+					}
+					else{
+						turing.put(x.getKey(), (float)x.getValue());
+					}
+				}
+				else{
+					turing.put(x.getKey(), (float)x.getValue());
+				}
+				
+			}
+			smoothed.put(el.getKey(), turing);
+		}
+		return smoothed;
+	}
+	
+	public static HashMap<String, HashMap<String, Float>> bigramProbHashmapSmoothed
+	(HashMap<String, HashMap<String, Float>> map, HashMap<String, Integer> unigramCounts){
+		HashMap<String, HashMap<String, Float>> outer = 
+				new HashMap<String, HashMap<String, Float>>(); 
+		for (Entry<String, HashMap<String, Float>> entry : map.entrySet()){
+			
+			Integer countOuter = unigramCounts.get(entry.getKey());
+			HashMap<String, Float> inner = new HashMap<String, Float>();
+			for (Entry<String, Float> innerEntry: map.get(entry.getKey()).entrySet()){
+				Float x = map.get(entry.getKey()).get(innerEntry.getKey());
+				float prob = x/countOuter;
+				inner.put(innerEntry.getKey(), prob);
+			}
+			outer.put(entry.getKey(), inner);	
+		}
+		return outer;
+	}
+	
+	public static float bigramSmoothed(String a, String b, HashMap<String, HashMap<String, Float>> map){
+		if (!map.containsKey(b)){
+			//System.out.println("here");
+			b="<unk>";
+		}
+		if (!map.get(b).containsKey(a)){
+			//System.out.println("here1");
+			a="<unk>";
+		}
+		
+		try{
+			//System.out.println(a);
+			//System.out.println(b);
+			return map.get(b).get(a);
+		}
+		catch (NullPointerException e){	
+			b="<unk>";
+			a="<unk>";
+			return map.get(b).get(a);
+		}
+
+	}
+	
+	public static ArrayList<String> tokenizeTest(String path){
+		File x = new File(path);
+		return makeArrayList(getContents(x));
+	}
+	
+	public static float perplexity(HashMap<String, HashMap<String, Float>> turBiProb, ArrayList<String> test){
+		float sum=0;
+		int i=1;
+		double n = test.size();
+		while(i<n){
+			float x = bigramSmoothed(test.get(i), test.get(i-1), turBiProb);
+			//System.out.println(x);
+			if (x==0){
+				System.out.println((test.get(i-1)+ " "+ test.get(i)));
+			}
+			sum = sum -(float)Math.log(x);
+			//System.out.println(sum);
+			i++;
+		}
+		
+		return (float)Math.exp(1/n)*sum;
+	}
+	
+	
+	
 }
 	
-	
-} 
-	
-
