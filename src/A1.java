@@ -12,6 +12,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
+import javax.swing.JTable;
+
 
 
 public class a1 {
@@ -19,9 +21,12 @@ public class a1 {
 	 * pre-processes them, and can be used to run our unigram and bigram models.
 	 * @param args
 	 */
+	private static String[] models = {"atheism", "autos", "graphics", "medicine", "motorcycles", "religion", "space"};
+	private static String modelPath= "/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/";
+	
 	public static void main(String[] args){
-		getFiles("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/atheism/train_docs");
-		String result=getFiles("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/atheism/train_docs"); 
+		getFiles("atheism");
+		String result=getFiles("atheism"); 
 		ArrayList<String> arr = makeArrayList(result);
 		//System.out.println(arr.size());
 		HashMap<String, Integer> x= unigramCounts(arr);
@@ -60,13 +65,14 @@ public class a1 {
 		//System.out.println(Math.log(0));
 		//System.out.println(bigramSmoothed("horrible", "something", bphs));
 		System.out.println(perplexity(bphs, testString));
+		System.out.println(perplexityTable());
 		
 		
 	}
 	
 	/** Takes a file path and retrieves all the files in that path as a string */
-	static String getFiles(String path){
-		File f = new File(path);
+	static String getFiles(String model){
+		File f = new File(modelPath+"/"+model+"/"+"train_docs");
 		ArrayList<File> files = new ArrayList<File>(Arrays.asList(f.listFiles()));
 		String result="";
 		for (File x :files){
@@ -139,7 +145,7 @@ public class a1 {
 				iter.remove();
 			}
 		}
-		System.out.println(myList);
+		//System.out.println(myList);
 		return myList;
 	}
 
@@ -515,6 +521,33 @@ public class a1 {
 		return (float)Math.exp(1/n)*sum;
 	}
 	
+	public static ArrayList<ArrayList<Float>> perplexityTable(){
+		File f = new File(modelPath+"/test_for_classification");
+		ArrayList<File> files = new ArrayList<File>(Arrays.asList(f.listFiles()));
+		ArrayList<ArrayList<Float>> pTable= new ArrayList<ArrayList<Float>>();
+		
+		for(String model:models){
+			String result=getFiles(model); 
+			ArrayList<String> arr = makeArrayList(result);
+			HashMap<String, Integer> x= unigramCounts(arr);
+			HashMap<String, HashMap<String, Integer>> bc = bigramCounts(arr);
+			HashMap<Integer, Integer> cofcb = countOfCountBigram(bc);
+			HashMap<String, HashMap<String, Float>> gtb =goodTuringBigram(bc, cofcb);
+			HashMap<String, HashMap<String, Float>> bphs= bigramProbHashmapSmoothed(gtb, x);
+			ArrayList<Float> inner= new ArrayList<Float>();
+			for (File file:files){
+
+				ArrayList<String> fileArrayl=makeArrayList(getContents(file));
+				Float perplexity = perplexity(bphs, fileArrayl);
+				inner.add(perplexity);
+				
+			}
+			pTable.add(inner);
+			
+		}
+		
+		return pTable;
+	}
 	
 	
 }
