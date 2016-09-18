@@ -61,11 +61,11 @@ public class a1 {
 		//System.out.println(cumProb(z));
 		//System.out.println(nextWord("half", cum));
 		//System.out.println(genSentenceBigram("My favorite sex position is",cum));
-		ArrayList<String> testString =tokenizeTest("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/test_for_classification/file_13.txt");
+		ArrayList<String> testString =tokenizeTest("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/test_for_classification/file_200.txt");
 		//System.out.println(Math.log(0));
 		//System.out.println(bigramSmoothed("horrible", "something", bphs));
 		System.out.println(perplexity(bphs, testString));
-		System.out.println(perplexityTable());
+		//System.out.println(findperplex("atheism",0 ));
 		
 		
 	}
@@ -506,19 +506,19 @@ public class a1 {
 	public static float perplexity(HashMap<String, HashMap<String, Float>> turBiProb, ArrayList<String> test){
 		float sum=0;
 		int i=1;
-		double n = test.size();
+		float n = test.size();
 		while(i<n){
+			//System.out.println("here");
 			float x = bigramSmoothed(test.get(i), test.get(i-1), turBiProb);
-			//System.out.println(x);
-			if (x==0){
-				System.out.println((test.get(i-1)+ " "+ test.get(i)));
-			}
 			sum = sum -(float)Math.log(x);
 			//System.out.println(sum);
+			
+			
 			i++;
 		}
+		System.out.println(1/n);
 		
-		return (float)Math.exp(1/n)*sum;
+		return (float)Math.pow(sum, 1/n);
 	}
 	
 	public static ArrayList<ArrayList<Float>> perplexityTable(){
@@ -553,9 +553,11 @@ public class a1 {
 	 * name and an int of the file number in terms of 1-250.
 	 * 
 	 */
-	public Float findperplex(String model, int fileNumber){
+	public static Float findperplex(String model, int fileNumber){
+		System.out.println(fileNumber);
 		int indexm = Arrays.asList(models).indexOf(model);
 		ArrayList<ArrayList<Float>>  pt = perplexityTable();
+		
 		return pt.get(indexm).get(fileNumber);
 		
 	}
@@ -563,4 +565,5 @@ public class a1 {
 	
 }
 	
+		
 	
