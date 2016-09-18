@@ -548,7 +548,19 @@ public class a1 {
 		
 		return pTable;
 	}
+	/**
+	 * returns the perplexity of a file, given a language model. Takes in a string of the model
+	 * name and an int of the file number in terms of 1-250.
+	 * 
+	 */
+	public Float findperplex(String model, int fileNumber){
+		int indexm = Arrays.asList(models).indexOf(model);
+		ArrayList<ArrayList<Float>>  pt = perplexityTable();
+		return pt.get(indexm).get(fileNumber);
+		
+	}
 	
 	
 }
+	
 	
