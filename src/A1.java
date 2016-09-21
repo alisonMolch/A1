@@ -25,13 +25,13 @@ public class a1 {
 	private static String modelPath= "/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/";
 	
 	public static void main(String[] args){
-		getFiles("atheism");
-		String result=getFiles("atheism"); 
+		getFiles("medicine");
+		String result=getFiles("medicine"); 
 		ArrayList<String> arr = makeArrayList(result);
 		//System.out.println(arr.size());
 		HashMap<String, Integer> x= unigramCounts(arr);
 	
-		//System.out.println(x);
+		System.out.println(x);
 //		HashMap<Integer, Integer> coc = countsOfCountsUnigram(x);
 //		HashMap<String, Float> gtu = goodTuringUnigram(x, coc);
 //		HashMap<String, Float> usph= unigramSmoothedProbHashmap(gtu, arr);
@@ -47,6 +47,7 @@ public class a1 {
 		HashMap<String, HashMap<String, Integer>> bc = bigramCounts(arr);
 		//System.out.println(bc);
 		HashMap<Integer, Integer> cofcb = countOfCountBigram(bc);
+		System.out.println(cofcb);
 		HashMap<String, HashMap<String, Float>> gtb =goodTuringBigram(bc, cofcb);
 		HashMap<String, HashMap<String, Float>> bphs= bigramProbHashmapSmoothed(gtb, x);
 		//HashMap<String, HashMap<String, Float>> z = bigramProbHashmap(bc, x);
@@ -61,7 +62,7 @@ public class a1 {
 		//System.out.println(cumProb(z));
 		//System.out.println(nextWord("half", cum));
 		//System.out.println(genSentenceBigram("My favorite sex position is",cum));
-		ArrayList<String> testString =tokenizeTest("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/test_for_classification/file_200.txt");
+		ArrayList<String> testString =tokenizeTest("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/test_for_classification/file_000.txt");
 		//System.out.println(Math.log(0));
 		//System.out.println(bigramSmoothed("horrible", "something", bphs));
 		System.out.println(perplexity(bphs, testString));
@@ -188,6 +189,16 @@ public class a1 {
 				result.put(x, result.get(x)+1);
 			}
 		}
+		Iterator it = result.entrySet().iterator();
+		while(it.hasNext()){
+			HashMap.Entry pair = (HashMap.Entry)it.next();
+			if (result.get(pair.getKey()).equals(0)){
+				it.remove();
+				result.remove(pair.getKey());
+				
+			}
+			
+		}
 		return result;
 	}
 	
@@ -208,6 +219,7 @@ public class a1 {
 			}
 			outer.put(entry.getKey(), inner);	
 		}
+		
 		return outer;
 	}
 	
@@ -413,7 +425,7 @@ public class a1 {
 		for (Entry<String, HashMap<String, Integer>> el: bigrams.entrySet()){
 			HashMap<String, Integer>innerHt = el.getValue();
 			for (Entry<String, Integer> x:innerHt.entrySet()){
-				if (x.getValue()<20){
+				if (x.getValue()<8){
 					if (!cofc.containsKey(x.getValue())){
 						cofc.put(x.getValue(), 1);
 					}
@@ -430,6 +442,12 @@ public class a1 {
 	
 	public static HashMap<String, HashMap<String, Float>> goodTuringBigram(HashMap<String, HashMap<String, Integer>> bicounts, HashMap<Integer, Integer> cofcb){
 		HashMap<String, HashMap<String, Float>> smoothed = new HashMap<String, HashMap<String, Float>>();
+//		float zero = cofcb.get(0);
+//		float one = cofcb.get(1);
+//		float newC = (float) 1*(one/zero);
+//		HashMap<String, Float> a= new HashMap<String, Float>();
+//		a.put("<UNKB>", newC);
+//		smoothed.put("<UNKB>", a);
 		for (Entry<String, HashMap<String, Integer>> el: bicounts.entrySet()){
 			HashMap<String, Float> turing = new HashMap<String, Float>();
 			HashMap<String, Integer>innerHM=el.getValue();
@@ -452,6 +470,7 @@ public class a1 {
 				}
 				
 			}
+			
 			smoothed.put(el.getKey(), turing);
 		}
 		return smoothed;
@@ -472,16 +491,17 @@ public class a1 {
 			}
 			outer.put(entry.getKey(), inner);	
 		}
+		//System.out.println(outer);
 		return outer;
 	}
 	
 	public static float bigramSmoothed(String a, String b, HashMap<String, HashMap<String, Float>> map){
 		if (!map.containsKey(b)){
-			//System.out.println("here");
+			//System.out.println("here1");
 			b="<unk>";
 		}
 		if (!map.get(b).containsKey(a)){
-			//System.out.println("here1");
+			//System.out.println("here2");
 			a="<unk>";
 		}
 		
@@ -491,6 +511,7 @@ public class a1 {
 			return map.get(b).get(a);
 		}
 		catch (NullPointerException e){	
+			//System.out.println("here");
 			b="<unk>";
 			a="<unk>";
 			return map.get(b).get(a);
@@ -511,14 +532,15 @@ public class a1 {
 			//System.out.println("here");
 			float x = bigramSmoothed(test.get(i), test.get(i-1), turBiProb);
 			sum = sum -(float)Math.log(x);
-			//System.out.println(sum);
+			//System.out.println(x);
 			
 			
 			i++;
 		}
-		System.out.println(1/n);
+		//System.out.println(1/n);
+		//System.out.println(sum);
 		
-		return (float)Math.pow(sum, 1/n);
+		return (float)Math.exp(1/n) *sum;
 	}
 	
 	public static ArrayList<ArrayList<Float>> perplexityTable(){
@@ -554,7 +576,7 @@ public class a1 {
 	 * 
 	 */
 	public static Float findperplex(String model, int fileNumber){
-		System.out.println(fileNumber);
+		//System.out.println(fileNumber);
 		int indexm = Arrays.asList(models).indexOf(model);
 		ArrayList<ArrayList<Float>>  pt = perplexityTable();
 		
