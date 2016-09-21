@@ -23,6 +23,8 @@ public class a1 {
 	 */
 	private static String[] models = {"atheism", "autos", "graphics", "medicine", "motorcycles", "religion", "space"};
 	private static String modelPath= "/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/";
+	private static String modelPathSpellCheck = "/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/spell_checking_task/";
+	private static ArrayList<String> confusion = tokenizeTest("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/spell_checking_task/confusion_set.txt");
 	
 	public static void main(String[] args){
 //		getFiles("religion");
@@ -63,13 +65,15 @@ public class a1 {
 		//System.out.println(cumProb(z));
 		//System.out.println(nextWord("half", cum));
 		//System.out.println(genSentenceBigram("My favorite sex position is",cum));
-		ArrayList<String> testString =tokenizeTest("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/test_for_classification/file_029.txt");
+		ArrayList<String> testString =tokenizeTest("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/test_for_classification/file_000.txt");
 		//System.out.println(Math.log(0));
 		//System.out.println(bigramSmoothed("horrible", "something", bphs));
 		//System.out.println(perplexity(bphs, testString));
 		//System.out.println(perplexityU(usph, testString));
 		//System.out.println(findperplex("atheism", "file_029.txt"));
-		System.out.println(classification("file_029.txt"));
+		//System.out.println(classification("file_200.txt"));
+		//System.out.println(classificationU("file_200.txt"));
+		//System.out.println(confusion);
 		
 		
 	}
@@ -549,7 +553,7 @@ public class a1 {
 			float x = bigramSmoothed(test.get(i), test.get(i-1), turBiProb);
 			//System.out.println(x);
 			//System.out.println(Math.log());
-			sum = sum -(float)(Math.log(x)/Math.log(2));
+			sum = sum -(float)(Math.log(x));
 			
 			
 			
@@ -559,7 +563,7 @@ public class a1 {
 		//System.out.println(sum);
 		//System.out.println(Math.exp(1/n));
 		
-		return (float)Math.pow(2, 1/n) *sum;
+		return (float)Math.exp(sum/n);
 	}
 	
 	public static float perplexityU(HashMap<String, Float> uniprobhash, ArrayList<String> test){
@@ -569,23 +573,25 @@ public class a1 {
 		while (i<n-1){
 			String word = test.get(i);
 			float prob = unigramSmoothed(word, uniprobhash);
+			//System.out.println(prob);
 			sum = sum - (float)Math.log(prob);
 			i++;
 		}
-		
-		return (float)Math.exp(1/n)*sum;
+		//System.out.println(sum/n);
+		return (float)Math.exp(sum/n);
 	}
 	
 	public static Float unigramSmoothed(String x, HashMap<String, Float> uniprobhash){
 		if (!uniprobhash.containsKey(x)){
+			//System.out.println("here");
 			x = "<unk>";
 		}
 		try {
-			System.out.println("here");
+			//System.out.println("here");
 			return uniprobhash.get(x);
 		}
 		catch (NullPointerException e){
-			System.out.println("here1");
+			//System.out.println("here1");
 			return uniprobhash.get("<unk>");
 		}
 	}
@@ -635,63 +641,43 @@ public class a1 {
 			Float p =perplexity(bphs, teststr);
 			//System.out.println(p);
 			if (p<min){
-				System.out.println("here");
+				//System.out.println("here");
 				result = model;
 				min=perplexity(bphs,teststr);
 			}
 		}
 		return result;
 	}
-	public static ArrayList<ArrayList<Float>> perplexityTable(){
-		File f = new File(modelPath+"/test_for_classification");
-		ArrayList<File> files = new ArrayList<File>(Arrays.asList(f.listFiles()));
-		ArrayList<ArrayList<Float>> pTable= new ArrayList<ArrayList<Float>>();
-		
-		for(String model:models){
-			String result=getFiles(model); 
-			ArrayList<String> arr = makeArrayList(result);
-			//HashMap<String, Integer> x= unigramCounts(arr);
-			HashMap<String, HashMap<String, Integer>> bc = bigramCounts(arr);
-			HashMap<Integer, Integer> cofcb = countOfCountBigram(bc);
-			HashMap<String, HashMap<String, Float>> gtb =goodTuringBigram(bc, cofcb);
-			HashMap<String, HashMap<String, Float>> bphs= bigramProbHashmapSmoothed(gtb);
-			ArrayList<Float> inner= new ArrayList<Float>();
-			for (File file:files){
-
-				ArrayList<String> fileArrayl=makeArrayList(getContents(file));
-				Float perplexity = perplexity(bphs, fileArrayl);
-				inner.add(perplexity);
-				
-			}
-			pTable.add(inner);
+	
+	public static String classificationU(String file){
+		ArrayList<String> teststr = tokenizeTest(modelPath+"/test_for_classification/"+file);
+		Float min = (float)Integer.MAX_VALUE;
+		String result = "medicine";
+		for (String model:models){
+			String resultstr=getFiles(model); 
 			
+			ArrayList<String> arr = makeArrayList(resultstr);
+			HashMap<String, Integer> uc = unigramCounts(arr);
+			HashMap<Integer, Integer> cofcu = countsOfCountsUnigram(uc);
+			
+			HashMap<String, Float> gtu =goodTuringUnigram(uc, cofcu);
+			
+			HashMap<String, Float> uphs= unigramSmoothedProbHashmap(gtu, arr);
+			Float p =perplexityU(uphs, teststr);
+			//System.out.println(p);
+			if (p<min){
+				//System.out.println("here");
+				result = model;
+				min=perplexityU(uphs,teststr);
+			}
 		}
-		
-		return pTable;
-	}
-//	/**
-//	 * returns the perplexity of a file, given a language model. Takes in a string of the model
-//	 * name and an int of the file number in terms of 1-250.
-//	 * 
-//	 */
-	public static Float findperplex(String model, String file){
-		//System.out.println(fileNumber);
-		File test = new File(modelPath+"/test_for_classification/"+file);
-		System.out.println(test);
-		ArrayList<String> fileArrayl=makeArrayList(getContents(test));
-		String result=getFiles(model); 
-		ArrayList<String> arr = makeArrayList(result);
-		//HashMap<String, Integer> x= unigramCounts(arr);
-		HashMap<String, HashMap<String, Integer>> bc = bigramCounts(arr);
-		HashMap<Integer, Integer> cofcb = countOfCountBigram(bc);
-		HashMap<String, HashMap<String, Float>> gtb =goodTuringBigram(bc, cofcb);
-		HashMap<String, HashMap<String, Float>> bphs= bigramProbHashmapSmoothed(gtb);
-		
-		return perplexity(bphs, fileArrayl);
-		
+		return result;
 	}
 	
 	
+	
+	
+
 }
 	
 		
