@@ -1,8 +1,11 @@
+import java.awt.List;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +27,7 @@ public class a1 {
 	private static String[] models = {"atheism", "autos", "graphics", "medicine", "motorcycles", "religion", "space"};
 	private static String modelPath= "/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/classification task/";
 	private static String modelPathSpellCheck = "/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/spell_checking_task/";
-	private static ArrayList<String> confusion = tokenizeTest("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/spell_checking_task/confusion_set.txt");
+	private static HashMap<String, ArrayList<String>> confusion = tokensConfusion("/Users/alisonmolchadsky/Documents/workspace/A1/data_corrected/spell_checking_task/confusion_set.txt");
 	
 	public static void main(String[] args){
 //		getFiles("religion");
@@ -74,7 +77,8 @@ public class a1 {
 		//System.out.println(classification("file_200.txt"));
 		//System.out.println(classificationU("file_200.txt"));
 		//System.out.println(confusion);
-		
+		//System.out.println(correctSpell("atheism", "atheism_file1_modified.txt"));
+		readToFile();
 		
 	}
 	
@@ -95,14 +99,33 @@ public class a1 {
 		return result;
 	}
 	
+	static String getFilesSpellCheck(String model){
+		File f = new File(modelPathSpellCheck+"/"+model+"/"+"train_docs");
+		ArrayList<File> files = new ArrayList<File>(Arrays.asList(f.listFiles()));
+		String result="";
+		for (File x :files){
+			try {
+				byte[] encoded = Files.readAllBytes(Paths.get(x.getPath()));
+				String strfile = new String(encoded, StandardCharsets.US_ASCII);
+				result = result+strfile;
+				
+			} catch (IOException e) {
+				//e.printStackTrace();
+			}
+			
+		}
+		return result;
+	}
+	
 	static String getContents(File x){
 		String result="";
 		try {
 			result = result +readFile(x.getPath(), StandardCharsets.US_ASCII);
 			
-		} catch (IOException e) {
-			//e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+		
 		return result;
 	}
 	
@@ -153,7 +176,6 @@ public class a1 {
 				iter.remove();
 			}
 		}
-		//System.out.println(myList);
 		return myList;
 	}
 
@@ -170,7 +192,6 @@ public class a1 {
 				}
 				else{
 					innerhash.put(arr.get(i+1), 1);
-					//innerhash.put("<unkb>", 0);
 				}
 			}
 			else{
@@ -217,9 +238,7 @@ public class a1 {
 	(HashMap<String, HashMap<String, Integer>> map, HashMap<String, Integer> unigramCounts){
 		HashMap<String, HashMap<String, Float>> outer = 
 				new HashMap<String, HashMap<String, Float>>(); 
-//		HashMap<String, Float> zero = new HashMap<String, Float>();
-//		zero.put("<unkb>", (float) 0);
-//		outer.put("<unkb>", zero);
+
 		for (Entry<String, HashMap<String, Integer>> entry : map.entrySet()){
 			
 			Integer countOuter = unigramCounts.get(entry.getKey());
@@ -228,7 +247,7 @@ public class a1 {
 				Integer x = map.get(entry.getKey()).get(innerEntry.getKey());
 				float prob = (float) x/ (float) countOuter;
 				inner.put(innerEntry.getKey(), prob);
-				//inner.put("<unkb>", (float)0);
+				
 			}
 			outer.put(entry.getKey(), inner);	
 		}
@@ -319,9 +338,7 @@ public class a1 {
 	 * the hashamp to return the next word*/
 	public static String nextWord(String prev, HashMap<String, LinkedHashMap<String, Float>> map){
 		double random = Math.random();
-		//System.out.println(random);
 		String next = "";
-		//System.out.println(prev);
 		LinkedHashMap<String, Float> lm =  map.get(prev);
 		for (Entry<String, Float> x :lm.entrySet()){
 			 if (random<x.getValue()){
@@ -516,23 +533,17 @@ public class a1 {
 	
 
 	public static float bigramSmoothed(String a, String b, HashMap<String, HashMap<String, Float>> map){
-		//System.out.println(map);
 		if (!map.containsKey(b)){
-			//System.out.println("here1");
 			b="<unk>";
 		}
 		if (!map.containsKey(a)){
-			//System.out.println("here2");
 			a="<unk>";
 		}
 		
 		try{
-			//System.out.println(a);
-			//System.out.println(b);
 			return map.get(b).get(a);
 		}
 		catch (NullPointerException e){	
-			//System.out.println("here");
 			a="<unkb>";
 			return map.get(b).get(a);
 		}
@@ -544,24 +555,75 @@ public class a1 {
 		return makeArrayList(getContents(x));
 	}
 	
+	public static ArrayList<String> tokenizeSpell(String path){
+		File x = new File(path);
+		String result="";
+		try {
+			byte[] encoded = Files.readAllBytes(Paths.get(path));
+			String strfile = new String(encoded, StandardCharsets.US_ASCII);
+			result = result+strfile;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		ArrayList<String> myList = new ArrayList<String>(Arrays.asList(result.split("\\s")));
+		myList.removeAll(Arrays.asList("", null));
+		return myList;
+		
+		
+	}
+	public static HashMap<String, ArrayList<String>> tokensConfusion(String path){
+		File x = new File(path);
+		HashMap<String, ArrayList<String>> confMap = new HashMap<String, ArrayList<String>>();
+		try{
+			byte[] encoded = Files.readAllBytes(Paths.get(path));
+			String strfile = new String(encoded, StandardCharsets.US_ASCII);
+			ArrayList<String> y = makeArrayList(strfile);
+			
+			y.set(0, "went");
+			int i = 0;
+			while (i<y.size()){
+				String pair = "";
+				ArrayList<String> inner = new ArrayList<String>();
+				if (i%2==0){
+					pair = y.get(i+1);
+					inner.add(pair);
+				}
+				if (i%2!=0){
+					pair = y.get(i-1);
+					inner.add(pair);
+				}
+				if (!confMap.containsKey(y.get(i))){
+					confMap.put(y.get(i), inner);
+				}
+				else{
+					confMap.get(y.get(i)).add(pair);
+				}
+				
+				i++;
+			}
+		}
+		catch (Exception e){
+				
+		}
+		
+
+	return confMap;
+
+		
+	}
+	
 	public static float perplexity(HashMap<String, HashMap<String, Float>> turBiProb, ArrayList<String> test){
 		float sum=0;
 		int i=1;
 		float n = test.size();
 		while(i<n){
-			//System.out.println("here");
 			float x = bigramSmoothed(test.get(i), test.get(i-1), turBiProb);
-			//System.out.println(x);
-			//System.out.println(Math.log());
 			sum = sum -(float)(Math.log(x));
 			
 			
 			
 			i++;
 		}
-		//System.out.println(1/n);
-		//System.out.println(sum);
-		//System.out.println(Math.exp(1/n));
 		
 		return (float)Math.exp(sum/n);
 	}
@@ -573,25 +635,20 @@ public class a1 {
 		while (i<n-1){
 			String word = test.get(i);
 			float prob = unigramSmoothed(word, uniprobhash);
-			//System.out.println(prob);
 			sum = sum - (float)Math.log(prob);
 			i++;
 		}
-		//System.out.println(sum/n);
 		return (float)Math.exp(sum/n);
 	}
 	
 	public static Float unigramSmoothed(String x, HashMap<String, Float> uniprobhash){
 		if (!uniprobhash.containsKey(x)){
-			//System.out.println("here");
 			x = "<unk>";
 		}
 		try {
-			//System.out.println("here");
 			return uniprobhash.get(x);
 		}
 		catch (NullPointerException e){
-			//System.out.println("here1");
 			return uniprobhash.get("<unk>");
 		}
 	}
@@ -606,7 +663,6 @@ public class a1 {
 				Float x = map.get(entry.getKey()).get(innerEntry.getKey());
 				count = x+count; 
 			} 
-			//Integer countOuter = unigramCounts.get(entry.getKey());
 			HashMap<String, Float> inner = new HashMap<String, Float>();
 			for (Entry<String, Float> innerEntry: map.get(entry.getKey()).entrySet()){
 				Float x = map.get(entry.getKey()).get(innerEntry.getKey());
@@ -615,16 +671,13 @@ public class a1 {
 			}
 			outer.put(entry.getKey(), inner);	
 		}
-		//System.out.println(outer);
+
 		return outer;
 	}
 
 
 	public static String classification(String file){
-		
-		//File test = new File(modelPath+"/classification_task/"+file);
 		ArrayList<String> teststr = tokenizeTest(modelPath+"/test_for_classification/"+file);
-		//System.out.println(teststr);
 		Float min = (float)Integer.MAX_VALUE;
 		String result = "medicine";
 		for (String model:models){
@@ -639,9 +692,7 @@ public class a1 {
 			
 			HashMap<String, HashMap<String, Float>> bphs= bigramProbHashmapSmoothed(gtb);
 			Float p =perplexity(bphs, teststr);
-			//System.out.println(p);
 			if (p<min){
-				//System.out.println("here");
 				result = model;
 				min=perplexity(bphs,teststr);
 			}
@@ -664,9 +715,7 @@ public class a1 {
 			
 			HashMap<String, Float> uphs= unigramSmoothedProbHashmap(gtu, arr);
 			Float p =perplexityU(uphs, teststr);
-			//System.out.println(p);
 			if (p<min){
-				//System.out.println("here");
 				result = model;
 				min=perplexityU(uphs,teststr);
 			}
@@ -675,6 +724,206 @@ public class a1 {
 	}
 	
 	
+	public static String correctSpell(String model, String testFile){
+		//System.out.println(confusion);
+		StringBuffer result  = new StringBuffer();
+		String resultstr=getFilesSpellCheck(model); 
+		ArrayList<String> arr = makeArrayList(resultstr);
+		HashMap<String, Integer> x= unigramCounts(arr);
+		HashMap<String, HashMap<String, Integer>> bc = bigramCounts(arr);
+		HashMap<Integer, Integer> cofcb = countOfCountBigram(bc);
+		HashMap<String, HashMap<String, Float>> gtb =goodTuringBigram(bc, cofcb);
+		HashMap<String, HashMap<String, Float>> bphs= bigramProbHashmapSmoothed(gtb);
+		ArrayList<String> test = tokenizeSpell(modelPathSpellCheck+"/"+model+"/test_modified_docs/"+testFile);
+		//System.out.println(test);
+
+		for (String word: test){
+			String prev = "[b]";
+			String next = "[b]";
+			try{
+				if(prev.equals(word)){
+					prev = test.get((test.indexOf(word)-2));
+				}
+				prev = test.get((test.indexOf(word)-1));
+			}
+			
+			catch (Exception e){
+				//System.out.println("here");
+				
+			}
+			try {
+				next = test.get((test.indexOf(word)+1));
+			}
+			
+			catch(Exception e){
+				
+			}
+			if (confusion.containsKey(word)){
+				String higher=word;
+				Float higherProb = compareBigram(prev, next, word, bphs);
+				for(String wordConf:confusion.get(word)){
+					if (compareBigram(prev, next, wordConf, bphs)>higherProb){
+						//System.out.println(wordConf);
+						higherProb  = compareBigram(prev, next, wordConf, bphs);
+						higher = wordConf;
+					}
+				}
+				
+				result.append(higher+" ");
+				
+			}
+			else{
+				result.append(word+" ");
+			}
+		}
+		return result.toString();
+	}
+	/*
+	 * Compares the the bigrams P(word1|word) and P(word2|word) and returns the word that gives the higher probability
+	 */
+	public static Float compareBigram(String prev, String next, String word, HashMap<String, HashMap<String, Float>> bigrams){
+		//System.out.println(prev + " " + word + " " + next + " "+bigramSmoothed(word, prev, bigrams)*(bigramSmoothed(next, word, bigrams)));
+		return bigramSmoothed(word, prev, bigrams)*(bigramSmoothed(next, word, bigrams));
+	}
+	
+//	public static String correctSpell2(String model, String testFile){
+//		System.out.println(confusion);
+//		StringBuffer result  = new StringBuffer();
+//		String resultstr=getFilesSpellCheck(model); 
+//		ArrayList<String> arr = makeArrayList(resultstr);
+//		HashMap<String, Integer> x= unigramCounts(arr);
+//		HashMap<String, HashMap<String, Integer>> bc = bigramCounts(arr);
+//		HashMap<Integer, Integer> cofcb = countOfCountBigram(bc);
+//		HashMap<String, HashMap<String, Float>> gtb =goodTuringBigram(bc, cofcb);
+//		HashMap<String, HashMap<String, Float>> bphs= bigramProbHashmapSmoothed(gtb);
+//		ArrayList<String> test = tokenizeTest(modelPathSpellCheck+"/"+model+"/test_modified_docs/"+testFile);
+//		return "";
+//	}
+	
+	public static void readToFile(){
+		
+		for (String model: models){
+			File f = new File(modelPathSpellCheck+"/"+model+"/"+"test_modified_docs/");
+			ArrayList<File> files = new ArrayList<File>(Arrays.asList(f.listFiles()));
+			for(File x: files){
+				try{
+					String name = x.getName();
+					String corrected = correctSpell(model, name);
+					FileWriter writer = new FileWriter(modelPathSpellCheck+"/" + model+"/test_docs/"+ name, true);
+					writer.write(corrected);
+					writer.close();
+					
+				}
+				catch (Exception e){
+					System.out.println("here");
+				}
+				
+			}
+		}
+	}
+	
+	public static Float trigramGetProb(String x, String y, String z, HashMap<String, HashMap<String, HashMap<String, Float>>> triprobhash){
+		return triprobhash.get(x).get(y).get(z);
+
+	}
+	
+	/**Given an arraylist of words, returns a hashmap within a hashmap of the counts 
+	 * of each combination of 2 words*/
+	public static HashMap<String,HashMap<String, HashMap<String, Integer>>> trigramCounts(ArrayList<String> arr){
+		HashMap<String, HashMap<String, HashMap<String, Integer>>> outerHash = 
+				new HashMap<String,HashMap<String, HashMap<String, Integer>>>();
+		for(int i=0; i<arr.size()-2; i++){
+			if (outerHash.containsKey(arr.get(i))){
+				HashMap<String,HashMap<String,Integer>>midhash = outerHash.get(arr.get(i));
+				if (midhash.containsKey(arr.get(i+1))){
+					HashMap<String,Integer> innerhash = midhash.get(arr.get(i+1));
+					if (innerhash.containsKey(arr.get(i+2))){
+						innerhash.put(arr.get(i+2), innerhash.get(arr.get(i+2))+1);	
+					}
+					else{
+						innerhash.put(arr.get(i+2), 1);
+					}
+					midhash.put(arr.get(i), innerhash);
+				}
+				else{
+					HashMap<String,Integer> innerhash = new HashMap<String,Integer>();
+					innerhash.put(arr.get(i+2), 1);
+					midhash.put(arr.get(i+1), innerhash);
+				}
+			}
+			else{
+				HashMap<String,Integer> innerhash = new HashMap<String, Integer>();
+				HashMap<String,HashMap<String,Integer>> midhash = new HashMap<String, HashMap<String,Integer>>();
+				innerhash.put(arr.get(i+2),1);
+				midhash.put(arr.get(i+1),innerhash);
+				outerHash.put(arr.get(i), midhash);
+			}
+		}
+		return outerHash;
+	}
+	/**Given a hashmap of words and their counts, return a hashmap of 
+			 * pairs of words and their probabilities using a trigram model*/
+		public static HashMap<String, HashMap<String, HashMap<String, Float>>> trigramProbHashmap
+			(HashMap<String, HashMap<String, HashMap<String, Integer>>> trigramCounts, HashMap<String, HashMap<String, Integer>> bigramCounts){
+				HashMap<String, HashMap<String, HashMap<String, Float>>> outer = new HashMap<String, HashMap<String, HashMap<String, Float>>>(); 
+			//	System.out.println("why");
+				for (Entry<String, HashMap<String, HashMap<String, Integer>>> entry : trigramCounts.entrySet()){
+					HashMap<String, HashMap<String,Float>> mid = new HashMap<String, HashMap<String,Float>>();
+					//System.out.println("no error yet");
+					for (Entry<String, HashMap<String, Integer>> midentry : trigramCounts.get(entry.getKey()).entrySet()){
+						Integer countOuter = bigramCounts.get(entry.getKey()).get(midentry.getKey()); 
+						//System.out.println("get first key  " + bigramCounts.get(entry.getKey()));
+						//System.out.println("get next key  " + bigramCounts.get(entry.getKey()).get(midentry.getKey()));
+						
+						HashMap<String, Float> inner = new HashMap<String, Float>();
+						//System.out.println("ok ok");
+						for (Entry<String, Integer> innerEntry: trigramCounts.get(entry.getKey()).get(midentry.getKey()).entrySet()){
+							Integer x = trigramCounts.get(entry.getKey()).get(midentry.getKey()).get(innerEntry.getKey());
+							float prob = 0;
+							try{
+								prob = (float) x/ (float) countOuter;
+							}
+							catch (NullPointerException e){
+								prob = 0;
+							}
+							inner.put(innerEntry.getKey(), prob);
+							//inner.put("<unkb>", (float)0);
+					//		System.out.println("wow");
+						}
+						mid.put(entry.getKey(), inner);	
+					}
+					outer.put(entry.getKey(), mid);	
+				}
+				return outer;
+			}
+		
+		public static float perplexityTri(HashMap<String, HashMap<String, HashMap<String, Float>>> triProb, ArrayList<String> test){
+			float sum=0;
+			int i=2;
+			float n = test.size();
+			while(i<n){
+				//System.out.println("here");
+				float x= 1;
+				try {
+					x = trigramGetProb(test.get(i), test.get(i-1), test.get(i-2), triProb);
+				}
+				catch (NullPointerException e){
+					
+				}
+				//System.out.println(x);
+				//System.out.println(Math.log());
+				sum = sum -(float)(Math.log(x));
+				
+				
+				
+				i++;
+			}
+			//System.out.println(1/n);
+			//System.out.println(sum);
+			//System.out.println(Math.exp(1/n));
+			
+			return (float)Math.exp(sum/n);
+		}
 	
 	
 
